@@ -1,0 +1,17 @@
+---
+- name: Weekly Patch Management
+  hosts: all
+  tasks:
+    # Windows Updates
+    - name: Update Windows
+      win_updates:
+        category_names:
+          - SecurityUpdates
+          - CriticalUpdates
+        state: installed
+      when: ansible_os_family == "Windows"
+
+    # Mac Updates
+    - name: Update Mac
+      shell: softwareupdate -ia
+      when: ansible_os_family == "Darwin"
