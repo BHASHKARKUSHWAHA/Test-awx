@@ -1,0 +1,28 @@
+---
+- name: Install Office Software
+  hosts: all
+  gather_facts: yes
+  tasks:
+    # Windows Apps (using Chocolatey)
+    - name: Windows Apps
+      win_chocolatey:
+        name: 
+          - googlechrome
+          - vscode
+          - git
+          - slack
+          - zoom
+        state: present
+      when: ansible_os_family == "Windows"
+
+    # Mac Apps (using Homebrew)
+    - name: Mac Apps
+      community.general.homebrew_cask:
+        name:
+          - google-chrome
+          - visual-studio-code
+          - git
+          - slack
+          - zoom
+        state: present
+      when: ansible_os_family == "Darwin"

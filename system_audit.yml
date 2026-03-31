@@ -1,0 +1,11 @@
+---
+- name: Device Health Audit
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Show System Info
+      debug:
+        msg: 
+          - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "RAM Free: {{ ansible_memfree_mb }} MB"
+          - "Disk Usage: {{ ansible_mounts[0].size_total - ansible_mounts[0].size_available | int }} bytes used"
