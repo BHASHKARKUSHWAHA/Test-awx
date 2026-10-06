@@ -100,9 +100,29 @@ sudo python3 install.py --dry-run      # see the detection and the plan, change 
 
 ## 3. Installation
 
+### One command on a fresh machine
+
 ```bash
-git clone <this repo>
-cd smart-awx-ai
+curl -fsSL https://raw.githubusercontent.com/BHASHKARKUSHWAHA/Test-awx/claude/ubuntu-awx-ai-agent-platform-oxyj69/smart-awx-ai/bootstrap.sh -o bootstrap.sh
+sudo bash bootstrap.sh
+```
+
+`bootstrap.sh` installs only what the installer cannot install for itself
+(`git`, `python3`, `curl`), clones the repository to `/opt/smart-awx-ai-src`
+and hands over to `install.py`. Every flag is forwarded:
+
+```bash
+sudo bash bootstrap.sh --dry-run
+sudo bash bootstrap.sh --profile TEST --keep-ufw
+```
+
+Re-running it updates the checkout instead of re-cloning.
+
+### Or clone it yourself
+
+```bash
+git clone -b claude/ubuntu-awx-ai-agent-platform-oxyj69 https://github.com/BHASHKARKUSHWAHA/Test-awx.git
+cd Test-awx/smart-awx-ai
 sudo python3 install.py
 ```
 
@@ -189,6 +209,7 @@ strictly worse for security than one well-scoped systemd service.
 
 ```
 smart-awx-ai/
+├── bootstrap.sh            fresh-machine entry point: deps, clone, hand over
 ├── install.py              single entry point, phase orchestration, resume
 ├── uninstall.py            staged removal
 ├── requirements.txt        fastapi, uvicorn, pydantic, pyyaml - nothing else
