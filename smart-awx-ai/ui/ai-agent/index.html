@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWX AI Agent</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%A4%96</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- ---------------------------------------------------------------- login -->
+<div id="login" class="screen hidden">
+  <form id="login-form" class="card login-card" autocomplete="on">
+    <h1>&#129302; AWX AI Agent</h1>
+    <p class="muted">Sign in with your AWX account. The agent runs entirely on this server.</p>
+    <label for="username">Username</label>
+    <input id="username" name="username" autocomplete="username" required>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    <button type="submit" class="primary">Sign in</button>
+    <p id="login-error" class="error hidden"></p>
+  </form>
+</div>
+
+<!-- ----------------------------------------------------------------- app -->
+<div id="app" class="screen hidden">
+  <aside class="sidebar">
+    <div class="brand">&#129302; <span>AI Agent</span></div>
+    <button id="new-chat" class="ghost block">+ New conversation</button>
+    <div class="section-title">Conversations</div>
+    <ul id="conversation-list" class="list"></ul>
+    <div class="section-title">Specialised agents</div>
+    <ul id="agent-list" class="list small"></ul>
+    <button id="create-agent" class="ghost block">+ Create agent</button>
+    <div class="sidebar-footer">
+      <div id="stack-health" class="health"></div>
+      <div class="row">
+        <span id="who" class="muted"></span>
+        <button id="logout" class="link">Sign out</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h2>&#129302; AWX AI Agent</h2>
+        <div id="model-line" class="muted small"></div>
+      </div>
+      <div class="topbar-actions">
+        <button id="toggle-trace" class="ghost">Execution trace</button>
+      </div>
+    </header>
+
+    <section id="messages" class="messages" aria-live="polite"></section>
+
+    <section id="composer" class="composer">
+      <textarea id="input" rows="2" placeholder="Ask about this server, Kubernetes or AWX&#8230;  (Shift+Enter for a new line)"></textarea>
+      <button id="send" class="primary">Send</button>
+    </section>
+    <div class="examples" id="examples"></div>
+  </main>
+
+  <aside id="trace" class="trace hidden">
+    <div class="trace-head">
+      <strong>Execution trace</strong>
+      <button id="close-trace" class="link">close</button>
+    </div>
+    <div id="trace-body"></div>
+  </aside>
+</div>
+
+<!-- ------------------------------------------------------------- approval -->
+<div id="approval" class="modal hidden">
+  <div class="card modal-card">
+    <h3 id="approval-title">Approval required</h3>
+    <dl class="kv">
+      <dt>Action</dt><dd id="approval-action"></dd>
+      <dt>Tool</dt><dd id="approval-tool"></dd>
+      <dt>Arguments</dt><dd id="approval-args"></dd>
+      <dt>Risk</dt><dd id="approval-risk"></dd>
+    </dl>
+    <p id="approval-note" class="muted"></p>
+    <div id="approval-confirm-row" class="hidden">
+      <label for="approval-confirm">Type <code id="approval-word">CONFIRM</code> to proceed</label>
+      <input id="approval-confirm" autocomplete="off">
+    </div>
+    <p id="approval-error" class="error hidden"></p>
+    <div class="modal-actions">
+      <button id="approval-cancel" class="ghost">Cancel</button>
+      <button id="approval-ok" class="danger">Approve &amp; run</button>
+    </div>
+  </div>
+</div>
+
+<!-- --------------------------------------------------------- create agent -->
+<div id="agent-modal" class="modal hidden">
+  <form class="card modal-card" id="agent-form">
+    <h3>Create a specialised agent</h3>
+    <label for="agent-name">Name</label>
+    <input id="agent-name" required maxlength="48" placeholder="Monitoring Agent 2">
+    <label for="agent-purpose">Purpose</label>
+    <input id="agent-purpose" required maxlength="200" placeholder="Watch resources and report pressure">
+    <label>Tool categories</label>
+    <div id="agent-categories" class="chips"></div>
+    <label for="agent-level">Maximum permission level</label>
+    <select id="agent-level">
+      <option value="read_only">read_only (inspect only)</option>
+      <option value="safe_write">safe_write (restart services and pods)</option>
+    </select>
+    <p id="agent-error" class="error hidden"></p>
+    <div class="modal-actions">
+      <button type="button" id="agent-cancel" class="ghost">Cancel</button>
+      <button type="submit" class="primary">Create</button>
+    </div>
+  </form>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+# Smart AWX + AI Agent - compatibility and sizing matrix
+# Everything the installer decides about hardware lives here, so a new machine
+# class can be supported without touching Python code.
+
+schema_version: 1
+
+supported_os:
+  ubuntu:
+    # Primary target. Other versions are allowed but reported as "warn".
+    supported: ["22.04", "24.04"]
+    tested: ["22.04"]
+    minimum: "20.04"
+  debian:
+    supported: ["11", "12"]
+    tested: []
+    minimum: "11"
+
+supported_arch: ["x86_64", "aarch64"]
+
+requirements:
+  hard:
+    # Below these the installer refuses to continue (unless --force).
+    ram_mb: 3500
+    disk_free_gb: 20
+    cpu_cores: 2
+  recommended:
+    ram_mb: 8000
+    disk_free_gb: 50
+    cpu_cores: 4
+
+# RAM based hardware profiles. First matching rule wins (max_ram_mb exclusive).
+profiles:
+  LOW:
+    max_ram_mb: 4096
+    description: "Minimal box. AWX will be tight; smallest possible model."
+  TEST:
+    max_ram_mb: 8192
+    description: "8 GB test machine. Target profile for this project."
+  NORMAL:
+    max_ram_mb: 16384
+    description: "Comfortable single node."
+  HIGH:
+    max_ram_mb: null
+    description: "16 GB+, larger local model possible."
+
+# Per profile sizing. Used for Kubernetes resources and model choice.
+sizing:
+  LOW:
+    awx:
+      web_mem_request: "512Mi"
+      web_mem_limit: "1Gi"
+      task_mem_request: "512Mi"
+      task_mem_limit: "1Gi"
+      ee_mem_limit: "512Mi"
+      postgres_mem_limit: "512Mi"
+      postgres_storage: "8Gi"
+      replicas: 1
+    agent:
+      mem_limit_mb: 384
+    ollama:
+      num_ctx: 2048
+      keep_alive: "2m"
+      max_loaded_models: 1
+    models:
+      # Tried in order; first one that pulls AND answers is used.
+      - "qwen2.5:0.5b-instruct-q4_K_M"
+      - "llama3.2:1b-instruct-q4_K_M"
+      - "qwen2.5:1.5b-instruct-q4_K_M"
+  TEST:
+    awx:
+      web_mem_request: "768Mi"
+      web_mem_limit: "1536Mi"
+      task_mem_request: "768Mi"
+      task_mem_limit: "1536Mi"
+      ee_mem_limit: "768Mi"
+      postgres_mem_limit: "768Mi"
+      postgres_storage: "8Gi"
+      replicas: 1
+    agent:
+      mem_limit_mb: 512
+    ollama:
+      num_ctx: 4096
+      keep_alive: "5m"
+      max_loaded_models: 1
+    models:
+      - "qwen2.5:3b-instruct-q4_K_M"
+      - "llama3.2:3b-instruct-q4_K_M"
+      - "qwen2.5:1.5b-instruct-q4_K_M"
+      - "llama3.2:1b-instruct-q4_K_M"
+  NORMAL:
+    awx:
+      web_mem_request: "1Gi"
+      web_mem_limit: "2Gi"
+      task_mem_request: "1Gi"
+      task_mem_limit: "2Gi"
+      ee_mem_limit: "1Gi"
+      postgres_mem_limit: "1Gi"
+      postgres_storage: "16Gi"
+      replicas: 1
+    agent:
+      mem_limit_mb: 768
+    ollama:
+      num_ctx: 8192
+      keep_alive: "10m"
+      max_loaded_models: 1
+    models:
+      - "qwen2.5:7b-instruct-q4_K_M"
+      - "llama3.1:8b-instruct-q4_K_M"
+      - "qwen2.5:3b-instruct-q4_K_M"
+  HIGH:
+    awx:
+      web_mem_request: "2Gi"
+      web_mem_limit: "4Gi"
+      task_mem_request: "2Gi"
+      task_mem_limit: "4Gi"
+      ee_mem_limit: "2Gi"
+      postgres_mem_limit: "2Gi"
+      postgres_storage: "32Gi"
+      replicas: 1
+    agent:
+      mem_limit_mb: 1024
+    ollama:
+      num_ctx: 8192
+      keep_alive: "15m"
+      max_loaded_models: 2
+    models:
+      - "qwen2.5:14b-instruct-q4_K_M"
+      - "qwen2.5:7b-instruct-q4_K_M"
+      - "llama3.1:8b-instruct-q4_K_M"
+
+# Model disk budget guard: never pull a model if free disk is under this.
+model_disk_guard_gb: 12
+
+versions:
+  awx_operator: "2.19.1"
+  k3s_channel: "stable"
+  # k3s flags per profile. Traefik is off by default because the AI proxy
+  # owns the NodePort entry point; local-path storage stays ON (AWX needs a PVC).
+  k3s_exec:
+    LOW: "--disable traefik --disable servicelb --disable metrics-server --write-kubeconfig-mode 644"
+    TEST: "--disable traefik --disable servicelb --disable metrics-server --write-kubeconfig-mode 644"
+    NORMAL: "--disable traefik --disable servicelb --write-kubeconfig-mode 644"
+    HIGH: "--disable traefik --disable servicelb --write-kubeconfig-mode 644"
+
+dependencies:
+  apt:
+    - curl
+    - ca-certificates
+    - git
+    - jq
+    - openssl
+    - python3
+    - python3-pip
+    - python3-venv
+    - python3-yaml
+    - iproute2
+    - iptables
+    - conntrack
+    - socat
+    - util-linux
+    - procps
+    - lsof
+    - net-tools
+    - iputils-ping
+    - dnsutils
+  # binary -> package that provides it, used for post install verification
+  verify_binaries:
+    curl: curl
+    git: git
+    jq: jq
+    openssl: openssl
+    python3: python3
+    ip: iproute2
+    iptables: iptables
+    conntrack: conntrack
+    socat: socat
+    mount: util-linux
+    ps: procps
+    ss: iproute2

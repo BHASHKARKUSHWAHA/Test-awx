@@ -1,0 +1,105 @@
+# Smart AWX + AI Agent - tool permission policy
+#
+# Levels
+#   read_only    : no state change, auto allowed
+#   safe_write   : reversible, low blast radius, allowed when auto_safe_write is true
+#   medium_risk  : changes config/packages, always needs user confirmation
+#   high_risk    : destructive, always needs explicit typed confirmation (CONFIRM)
+#
+# The agent can never raise its own privileges: the level stored on the tool
+# definition and the level here are compared and the STRICTER of the two wins.
+
+schema_version: 1
+
+policy:
+  # SAFE_WRITE actions run without asking. Set to false for a fully read-only agent.
+  auto_safe_write: true
+  # MEDIUM_RISK and HIGH_RISK always require approval; these cannot be disabled
+  # from the chat UI - they are enforced server side.
+  auto_medium_risk: false
+  auto_high_risk: false
+  # Typed confirmation word required for high risk actions.
+  high_risk_confirmation_word: "CONFIRM"
+  # Approval tokens expire after this many seconds.
+  approval_ttl_seconds: 300
+  # Max tool executions per single user request (stops runaway loops).
+  max_tool_calls_per_request: 12
+  # Max seconds a single tool may run.
+  default_tool_timeout: 30
+
+# Explicit overrides. Anything not listed uses the level declared by the tool.
+overrides:
+  delete_kubernetes_namespace: high_risk
+  reset_kubernetes: high_risk
+  modify_ssh_access: high_risk
+  disable_firewall: high_risk
+  delete_file: high_risk
+  stop_service: medium_risk
+  install_package: medium_risk
+  set_deployment_resources: medium_risk
+  scale_deployment: medium_risk
+  launch_job_template: medium_risk
+  restart_service: safe_write
+  restart_pod: safe_write
+  relaunch_job: safe_write
+
+# Services the agent is allowed to touch with safe_write (restart). Anything
+# outside this list is escalated to medium_risk.
+safe_write_services:
+  - nginx
+  - apache2
+  - ollama
+  - smart-awx-ai-agent
+  - cron
+  - rsyslog
+  - chrony
+  - systemd-resolved
+  - docker
+  - containerd
+
+# Services that are NEVER restartable by the agent without explicit approval,
+# even if they appear above.
+critical_services:
+  - k3s
+  - ssh
+  - sshd
+  - systemd-journald
+  - dbus
+
+# Namespaces that may never be deleted, even with approval.
+protected_namespaces:
+  - kube-system
+  - kube-public
+  - kube-node-lease
+  - default
+  - awx
+
+# Packages the agent may install after approval. Empty list means "any", which
+# is intentionally not the default.
+installable_packages:
+  - nginx
+  - htop
+  - curl
+  - jq
+  - git
+  - net-tools
+  - tcpdump
+  - sysstat
+  - unzip
+  - tree
+
+# Paths that read-only log tools may read.
+readable_log_paths:
+  - /var/log/syslog
+  - /var/log/auth.log
+  - /var/log/kern.log
+  - /var/log/dpkg.log
+  - /var/log/smart-awx-ai/install.log
+  - /var/log/smart-awx-ai/agent.log
+  - /var/log/smart-awx-ai/audit.log
+
+# Agent creation limits (section 28 of the spec).
+agent_factory:
+  max_agents: 8
+  allowed_tool_categories: ["linux", "kubernetes", "awx", "monitoring", "networking"]
+  max_permission_level: safe_write

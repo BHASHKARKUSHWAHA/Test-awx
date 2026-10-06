@@ -1,0 +1,8 @@
+# AI Agent backend runtime dependencies.
+# Installed into /opt/smart-awx-ai/venv by install.py (phase 5).
+# Deliberately small: everything else uses the Python standard library so the
+# agent keeps working on a constrained 8 GB machine and offline after setup.
+fastapi>=0.110,<1.0
+uvicorn>=0.27,<1.0
+pydantic>=2.5,<3.0
+PyYAML>=6.0,<7.0

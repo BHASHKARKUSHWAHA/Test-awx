@@ -1,0 +1,67 @@
+# AWX custom resource, rendered by installer/awx.py.
+# Placeholders are substituted with values derived from the detected hardware
+# profile in config/compatibility.yaml -> sizing.<PROFILE>.awx
+---
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: ${AWX_NAME}
+  namespace: ${AWX_NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: smart-awx-ai
+    smart-awx-ai/profile: ${PROFILE}
+spec:
+  # --- access ----------------------------------------------------------
+  # NodePort keeps the entry point dependency free; the AI proxy in front of
+  # it (manifests/ai-agent.yaml) is what users actually open on :${PROXY_NODEPORT}.
+  service_type: nodeport
+  nodeport_port: ${AWX_NODEPORT}
+  ingress_type: none
+  admin_user: admin
+
+  # --- scale -----------------------------------------------------------
+  replicas: ${REPLICAS}
+
+  # --- storage ---------------------------------------------------------
+  postgres_storage_class: ${STORAGE_CLASS}
+  postgres_storage_requirements:
+    requests:
+      storage: ${POSTGRES_STORAGE}
+  projects_persistence: false
+
+  # --- resource envelope (profile: ${PROFILE}) --------------------------
+  web_resource_requirements:
+    requests:
+      cpu: 100m
+      memory: ${WEB_MEM_REQUEST}
+    limits:
+      memory: ${WEB_MEM_LIMIT}
+  task_resource_requirements:
+    requests:
+      cpu: 100m
+      memory: ${TASK_MEM_REQUEST}
+    limits:
+      memory: ${TASK_MEM_LIMIT}
+  ee_resource_requirements:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: ${EE_MEM_LIMIT}
+  postgres_resource_requirements:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: ${POSTGRES_MEM_LIMIT}
+  init_container_resource_requirements:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+  # --- hygiene ---------------------------------------------------------
+  # no_log hides task output that can contain credentials from the operator log.
+  no_log: true
+  create_preload_data: true
